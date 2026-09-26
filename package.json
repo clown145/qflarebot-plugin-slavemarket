@@ -1,0 +1,24 @@
+{
+  "name": "qflarebot-plugin-slavemarket",
+  "version": "0.1.0",
+  "description": "QFlareBot 群聊文字游戏：奴隶市场（移植自 Yunzai 插件 Slave-Market）",
+  "license": "MulanPSL-2.0",
+  "type": "module",
+  "keywords": [
+    "qflarebot-plugin"
+  ],
+  "scripts": {
+    "build": "qqbot-plugin build",
+    "sync": "qqbot-plugin build && node -e \"require('node:fs').copyFileSync('dist/manifest.json','manifest.json')\"",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p test"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250917.0",
+    "@qqbot/plugin-cli": "file:../QFlareBot/packages/plugin-cli",
+    "@qqbot/sdk": "file:../QFlareBot/packages/sdk",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

@@ -1,0 +1,523 @@
+{
+  "name": "slavemarket",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "permissions": [
+    "db"
+  ],
+  "depends": {
+    "t2i": "*"
+  },
+  "conflicts": [],
+  "commands": [
+    {
+      "name": "打工",
+      "aliases": [
+        "工作",
+        "一键打工",
+        "一键工作"
+      ],
+      "description": "打工赚金币，有奴隶就派奴隶去"
+    },
+    {
+      "name": "购买奴隶",
+      "aliases": [
+        "购买群友"
+      ],
+      "usage": "/购买奴隶 @群友 或 /购买奴隶 市场编号",
+      "description": "买下群友当奴隶"
+    },
+    {
+      "name": "我的奴隶",
+      "aliases": [
+        "我的群友"
+      ],
+      "description": "看自己的金币、身价和奴隶"
+    },
+    {
+      "name": "奴隶市场",
+      "aliases": [
+        "群友市场"
+      ],
+      "description": "看全群的身价和主人"
+    },
+    {
+      "name": "放生奴隶",
+      "aliases": [
+        "放生群友"
+      ],
+      "usage": "/放生奴隶 序号 或 /放生奴隶 @群友",
+      "description": "放走自己的奴隶"
+    },
+    {
+      "name": "赎身",
+      "description": "两倍身价买回自己"
+    },
+    {
+      "name": "抢劫",
+      "aliases": [
+        "打劫"
+      ],
+      "usage": "/抢劫 或 /抢劫 @群友",
+      "description": "抢别人的金币，不@就随机"
+    },
+    {
+      "name": "存款",
+      "usage": "/存款 金额",
+      "description": "把金币存进银行"
+    },
+    {
+      "name": "一键存款",
+      "description": "能存多少存多少"
+    },
+    {
+      "name": "取款",
+      "usage": "/取款 金额",
+      "description": "从银行取出金币"
+    },
+    {
+      "name": "升级信用",
+      "description": "提升银行存储上限"
+    },
+    {
+      "name": "一键升级信用",
+      "description": "钱够就一直升级信用"
+    },
+    {
+      "name": "银行信息",
+      "description": "看存款、上限和利息"
+    },
+    {
+      "name": "领取利息",
+      "description": "领取存款利息"
+    },
+    {
+      "name": "转账",
+      "usage": "/转账 金额 @群友",
+      "description": "给群友转金币，收手续费"
+    },
+    {
+      "name": "训练",
+      "usage": "/训练 序号 或 /训练 @群友",
+      "description": "训练奴隶提升身价"
+    },
+    {
+      "name": "一键训练",
+      "description": "训练所有奴隶"
+    },
+    {
+      "name": "决斗",
+      "usage": "/决斗 我的奴隶序号 对手（@群友或序号）",
+      "description": "让奴隶和别人的奴隶决斗"
+    },
+    {
+      "name": "排位赛",
+      "description": "看奴隶的段位和分数"
+    },
+    {
+      "name": "参加排位赛",
+      "usage": "/参加排位赛 序号 或 /参加排位赛 @群友",
+      "description": "让奴隶打排位赛拿奖励"
+    },
+    {
+      "name": "奴隶身价排行榜",
+      "description": "本群身价前 15 名"
+    },
+    {
+      "name": "奴隶资金排行榜",
+      "description": "本群金币前 15 名"
+    },
+    {
+      "name": "上周排行榜",
+      "description": "上周四个榜的回顾"
+    },
+    {
+      "name": "奴隶重置状态",
+      "description": "每周重置的时间和记录"
+    },
+    {
+      "name": "手动奴隶重置",
+      "permission": "group_admin",
+      "usage": "/手动奴隶重置，再点确认或发 /手动奴隶重置 确认",
+      "description": "清空本群的游戏数据"
+    },
+    {
+      "name": "奴隶重置帮助",
+      "description": "每周重置的说明"
+    },
+    {
+      "name": "奴隶帮助",
+      "aliases": [
+        "奴隶菜单",
+        "nl帮助",
+        "nl菜单",
+        "群友帮助",
+        "群友菜单"
+      ],
+      "description": "奴隶市场的全部指令"
+    }
+  ],
+  "regex": [],
+  "events": [
+    {
+      "event": [
+        "qq.group.member_removed"
+      ]
+    }
+  ],
+  "buttons": [
+    {
+      "id": "slave_reset"
+    }
+  ],
+  "cron": [
+    {
+      "name": "prune",
+      "cron": "23 20 * * 0"
+    }
+  ],
+  "routes": [],
+  "hasMiddleware": false,
+  "services": [],
+  "durableObjects": [],
+  "displayName": "奴隶市场",
+  "description": "群聊文字游戏：打工赚钱、买卖群友当奴隶、训练、决斗、排位赛、银行、排行榜，每周自动重置",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "buyback_cooldown": {
+        "type": "integer",
+        "title": "赎身冷却（秒）",
+        "default": 86400,
+        "minimum": 0
+      },
+      "buyback_max_times": {
+        "type": "integer",
+        "title": "每周最多赎身次数",
+        "default": 3,
+        "minimum": 1
+      },
+      "buyback_tax_rate": {
+        "type": "number",
+        "title": "赎身税率（0-1）",
+        "default": 0.05,
+        "minimum": 0,
+        "maximum": 1
+      },
+      "rob_cooldown": {
+        "type": "integer",
+        "title": "抢劫冷却（秒）",
+        "default": 600,
+        "minimum": 0
+      },
+      "rob_success_rate": {
+        "type": "number",
+        "title": "抢劫成功率（0-1）",
+        "default": 0.3,
+        "minimum": 0,
+        "maximum": 1
+      },
+      "rob_penalty": {
+        "type": "number",
+        "title": "抢劫失败罚金比例（0-1）",
+        "default": 0.1,
+        "minimum": 0,
+        "maximum": 1
+      },
+      "work_cooldown": {
+        "type": "integer",
+        "title": "打工冷却（秒）",
+        "default": 3600,
+        "minimum": 0
+      },
+      "work_slaveowner_cooldown": {
+        "type": "integer",
+        "title": "尊贵的奴隶主打工冷却（秒）",
+        "default": 60,
+        "minimum": 0
+      },
+      "purchase_cooldown": {
+        "type": "integer",
+        "title": "购买冷却（秒）",
+        "default": 3600,
+        "minimum": 0
+      },
+      "bank_initial_limit": {
+        "type": "integer",
+        "title": "银行初始存储上限",
+        "default": 1000,
+        "minimum": 0
+      },
+      "bank_initial_level": {
+        "type": "integer",
+        "title": "银行初始信用等级",
+        "default": 1,
+        "minimum": 1
+      },
+      "bank_upgrade_price_multi": {
+        "type": "number",
+        "title": "升级费用倍数",
+        "default": 1.2,
+        "minimum": 1
+      },
+      "bank_limit_increase_multi": {
+        "type": "number",
+        "title": "存储上限增长倍数",
+        "default": 1.25,
+        "minimum": 1
+      },
+      "bank_initial_upgrade_price": {
+        "type": "integer",
+        "title": "初始升级费用",
+        "default": 100,
+        "minimum": 1
+      },
+      "bank_interest_rate": {
+        "type": "number",
+        "title": "每小时利率（0-1）",
+        "default": 0.01,
+        "minimum": 0,
+        "maximum": 1
+      },
+      "bank_max_interest_hours": {
+        "type": "integer",
+        "title": "最多计息小时数",
+        "default": 24,
+        "minimum": 1
+      },
+      "training_cooldown": {
+        "type": "integer",
+        "title": "训练冷却（秒）",
+        "default": 7200,
+        "minimum": 0
+      },
+      "training_success_rate": {
+        "type": "number",
+        "title": "训练成功率（0-1）",
+        "default": 0.7,
+        "minimum": 0,
+        "maximum": 1
+      },
+      "training_cost_rate": {
+        "type": "number",
+        "title": "训练费用比例（按奴隶身价）",
+        "default": 0.1,
+        "minimum": 0,
+        "maximum": 1
+      },
+      "training_value_increase_rate": {
+        "type": "number",
+        "title": "训练成功身价提升比例",
+        "default": 0.2,
+        "minimum": 0
+      },
+      "arena_cooldown": {
+        "type": "integer",
+        "title": "决斗冷却（秒）",
+        "default": 7200,
+        "minimum": 0
+      },
+      "arena_entry_fee": {
+        "type": "integer",
+        "title": "决斗参赛费用",
+        "default": 50,
+        "minimum": 0
+      },
+      "arena_reward_rate": {
+        "type": "number",
+        "title": "获胜奖励比例（按参赛费用）",
+        "default": 0.2,
+        "minimum": 0
+      },
+      "arena_value_bonus": {
+        "type": "number",
+        "title": "获胜者身价提升比例",
+        "default": 0.1,
+        "minimum": 0
+      },
+      "ranking_cooldown": {
+        "type": "integer",
+        "title": "排位赛冷却（秒）",
+        "default": 3600,
+        "minimum": 0
+      },
+      "ranking_base_reward": {
+        "type": "integer",
+        "title": "排位赛基础奖励金币",
+        "default": 10,
+        "minimum": 0
+      },
+      "ranking_win_bonus": {
+        "type": "number",
+        "title": "排位赛胜利额外奖励比例",
+        "default": 0.2,
+        "minimum": 0
+      },
+      "ranking_tier_bonus_bronze": {
+        "type": "number",
+        "title": "青铜段位奖励倍率",
+        "default": 1,
+        "minimum": 0
+      },
+      "ranking_tier_bonus_silver": {
+        "type": "number",
+        "title": "白银段位奖励倍率",
+        "default": 1.2,
+        "minimum": 0
+      },
+      "ranking_tier_bonus_gold": {
+        "type": "number",
+        "title": "黄金段位奖励倍率",
+        "default": 1.5,
+        "minimum": 0
+      },
+      "ranking_tier_bonus_platinum": {
+        "type": "number",
+        "title": "铂金段位奖励倍率",
+        "default": 2,
+        "minimum": 0
+      },
+      "ranking_tier_bonus_diamond": {
+        "type": "number",
+        "title": "钻石段位奖励倍率",
+        "default": 3,
+        "minimum": 0
+      },
+      "transfer_fee_rate": {
+        "type": "number",
+        "title": "转账手续费率（0-1）",
+        "default": 0.1,
+        "minimum": 0,
+        "maximum": 1
+      },
+      "transfer_min_amount": {
+        "type": "integer",
+        "title": "最低转账金额",
+        "default": 100,
+        "minimum": 0
+      },
+      "weekly_reset_enabled": {
+        "type": "boolean",
+        "title": "每周重置",
+        "description": "到点后本群的第一条命令开启新的一周：所有人回到初始状态，上周排行榜留一份可查。只重置用过的群，不用定时推送",
+        "default": true
+      },
+      "reset_day": {
+        "type": "integer",
+        "title": "重置日（0=周日，1=周一 … 6=周六，北京时间）",
+        "default": 1,
+        "minimum": 0,
+        "maximum": 6
+      },
+      "reset_hour": {
+        "type": "integer",
+        "title": "重置小时（0-23）",
+        "default": 0,
+        "minimum": 0,
+        "maximum": 23
+      },
+      "reset_minute": {
+        "type": "integer",
+        "title": "重置分钟（0-59）",
+        "default": 0,
+        "minimum": 0,
+        "maximum": 59
+      },
+      "reset_keep_nickname": {
+        "type": "boolean",
+        "title": "重置时保留昵称",
+        "default": true
+      },
+      "reset_base_value": {
+        "type": "integer",
+        "title": "重置后的基础身价",
+        "default": 100,
+        "minimum": 0
+      },
+      "ignore_cd_users": {
+        "type": "array",
+        "title": "无视冷却的用户 openid",
+        "description": "在群里发内置插件的 /sid 可以查到自己的 openid",
+        "items": {
+          "type": "string"
+        },
+        "default": []
+      },
+      "slaveowner_users": {
+        "type": "array",
+        "title": "尊贵的奴隶主 openid",
+        "description": "没有奴隶时打工按奴隶主算：收入更高、冷却按上面的「尊贵的奴隶主打工冷却」",
+        "items": {
+          "type": "string"
+        },
+        "default": []
+      },
+      "use_image": {
+        "type": "boolean",
+        "title": "用图片回复",
+        "description": "打工报告、一键训练、排行榜、市场、帮助等用内置 T2I 插件渲染成图；关掉或渲染失败时发文字",
+        "default": true
+      },
+      "market_limit": {
+        "type": "integer",
+        "title": "奴隶市场最多展示几人（按身价从高到低）",
+        "default": 100,
+        "minimum": 1,
+        "maximum": 300
+      },
+      "prune_weeks": {
+        "type": "integer",
+        "title": "清理多少周没玩过的玩家数据（0 = 不清理）",
+        "default": 4,
+        "minimum": 0
+      }
+    }
+  },
+  "defaultConfig": {
+    "buyback_cooldown": 86400,
+    "buyback_max_times": 3,
+    "buyback_tax_rate": 0.05,
+    "rob_cooldown": 600,
+    "rob_success_rate": 0.3,
+    "rob_penalty": 0.1,
+    "work_cooldown": 3600,
+    "work_slaveowner_cooldown": 60,
+    "purchase_cooldown": 3600,
+    "bank_initial_limit": 1000,
+    "bank_initial_level": 1,
+    "bank_upgrade_price_multi": 1.2,
+    "bank_limit_increase_multi": 1.25,
+    "bank_initial_upgrade_price": 100,
+    "bank_interest_rate": 0.01,
+    "bank_max_interest_hours": 24,
+    "training_cooldown": 7200,
+    "training_success_rate": 0.7,
+    "training_cost_rate": 0.1,
+    "training_value_increase_rate": 0.2,
+    "arena_cooldown": 7200,
+    "arena_entry_fee": 50,
+    "arena_reward_rate": 0.2,
+    "arena_value_bonus": 0.1,
+    "ranking_cooldown": 3600,
+    "ranking_base_reward": 10,
+    "ranking_win_bonus": 0.2,
+    "ranking_tier_bonus_bronze": 1,
+    "ranking_tier_bonus_silver": 1.2,
+    "ranking_tier_bonus_gold": 1.5,
+    "ranking_tier_bonus_platinum": 2,
+    "ranking_tier_bonus_diamond": 3,
+    "transfer_fee_rate": 0.1,
+    "transfer_min_amount": 100,
+    "weekly_reset_enabled": true,
+    "reset_day": 1,
+    "reset_hour": 0,
+    "reset_minute": 0,
+    "reset_keep_nickname": true,
+    "reset_base_value": 100,
+    "ignore_cd_users": [],
+    "slaveowner_users": [],
+    "use_image": true,
+    "market_limit": 100,
+    "prune_weeks": 4
+  }
+}
