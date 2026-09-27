@@ -2,7 +2,7 @@ import type { CommandInput, OutgoingMessage, PluginContext, ScopedDB, Session } 
 import type { Config } from './config.js'
 import type { Player } from './model.js'
 import { type GroupState, loadPlayers, loadSeason, savePlayers } from './store.js'
-import { type Mentioned, mentionedUsers } from './targets.js'
+import { type Mentioned, mentionDiagnostics, mentionedUsers } from './targets.js'
 import { recapText } from './boards.js'
 
 /** 一条命令的上下文：本群第几期、谁发的、@ 了谁 */
@@ -35,6 +35,12 @@ export interface Mutation<T> {
 export type GameReply = OutgoingMessage | OutgoingMessage[] | undefined
 
 class Conflict extends Error {}
+
+/** 需要目标却一个都没找到：回复用法，并把平台推来的 mentions 结构写进日志，@ 了还识别不了时好查 */
+export function noTarget(game: Game, reply: string): string {
+  game.ctx.logger.warn('奴隶市场没找到 @ 的目标', mentionDiagnostics(game.session))
+  return reply
+}
 
 const ATTEMPTS = 3
 

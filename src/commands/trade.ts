@@ -1,5 +1,5 @@
 import copywriting from '../copywriting.json'
-import type { Game, GameReply } from '../game.js'
+import { type Game, type GameReply, noTarget } from '../game.js'
 import { type Player, nameOf, round2, sample } from '../model.js'
 import { marketHtml, renderImage } from '../render.js'
 import { loadGroupPlayers, loadSlaves } from '../store.js'
@@ -46,7 +46,7 @@ export async function market(game: Game): Promise<GameReply> {
 /** 购买奴隶（上游 purchaseSlaves.js）：目标是 @群友 或市场编号 */
 export async function purchase(game: Game, tokens: TargetToken[]): Promise<GameReply> {
   const target = await resolveTarget(tokens[0], async () => marketOrder(await loadGroupPlayers(game.db, game.groupId, game.group.season, game.cfg)))
-  if (!target) return '请 @ 要购买的群友，或者发 /购买奴隶 市场编号（发 /奴隶市场 查看编号）'
+  if (!target) return noTarget(game, '请 @ 要购买的群友，或者发 /购买奴隶 市场编号（发 /奴隶市场 查看编号）')
   if (target === game.session.botId) return '不可以购买我捏~'
   if (target === game.userId) return '不可以购买自己捏~'
 
@@ -96,7 +96,7 @@ export async function purchase(game: Game, tokens: TargetToken[]): Promise<GameR
 /** 放生奴隶（上游 releaseSlave.js）：只改奴隶那一行 */
 export async function release(game: Game, tokens: TargetToken[]): Promise<GameReply> {
   const target = await resolveTarget(tokens[0], mySlaves(game))
-  if (!target) return '请指定要放生的奴隶：/放生奴隶 序号（发 /我的奴隶 查看序号）或 /放生奴隶 @群友'
+  if (!target) return noTarget(game, '请指定要放生的奴隶：/放生奴隶 序号（发 /我的奴隶 查看序号）或 /放生奴隶 @群友')
   return game.mutate([target], (ps) => {
     const slave = ps.get(target)!
     if (slave.master !== game.userId) return { save: [], result: '你不是该奴隶的主人' }

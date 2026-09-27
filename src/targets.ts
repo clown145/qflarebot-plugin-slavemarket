@@ -17,13 +17,21 @@ interface RawMention {
 
 const str = (v: unknown) => (typeof v === 'string' ? v : '')
 
+const MENTION = /<@!?([0-9A-Za-z_-]+)>/g
+
+/** 正文开头、命令之前那一串 `<@…>`：「@机器人 购买奴隶 @群友」里前面那个是在叫机器人 */
+function leadingMentions(content: string): Set<string> {
+  const head = /^(?:\s*<@!?[0-9A-Za-z_-]+>)+/.exec(content)?.[0] ?? ''
+  return new Set([...head.matchAll(MENTION)].map((m) => m[1]!))
+}
+
 /**
  * 消息里 @ 了谁（不含机器人），按在消息里出现的先后排——`/决斗 @A @B` 要分得清谁是谁。
- * 谁被 @ 只认平台给的 mentions（机器人自己在群里的 openid 和 AppID 不是一个，正文里的 `<@…>` 分不出是不是它）；
- * 原始正文只用来排先后。
  *
- * 群消息的 mentions 里被 @ 者是 member_openid / nickname，没有 id；旧版框架的 session.mentions 只读 id，
- * 群里 @ 谁都是空的（线上「购买奴隶 @群友」就是这么坏的），所以这里直接读原始推送，再并上 session.mentions
+ * 1. 平台给的 mentions：原始推送（群消息可能是 id / username，也可能是 member_openid / nickname，都读）并上 session.mentions，
+ *    标了 bot 或 is_you 的是机器人。
+ * 2. 正文里的 `<@openid>`：没开全量消息的群里「@机器人 购买奴隶 @群友」，被 @ 的群友可能只出现在正文里、不在 mentions 里。
+ *    机器人在群里的 openid 和 AppID 不是一个，mentions 没标出来时认不出它，所以命令前面那一串 @ 当作在叫机器人、不算目标
  */
 export function mentionedUsers(session: Session): Mentioned[] {
   const raw = session.raw as { content?: unknown; mentions?: unknown } | undefined
@@ -46,6 +54,13 @@ export function mentionedUsers(session: Session): Mentioned[] {
   for (const m of session.mentions) add(m.id, m.username, m.bot)
 
   const content = typeof raw?.content === 'string' ? raw.content : ''
+  const leading = leadingMentions(content)
+  for (const m of content.matchAll(MENTION)) {
+    const id = m[1]!
+    if (bots.has(id) || leading.has(id) || users.some((u) => u.id === id)) continue
+    users.push({ id, username: '' })
+  }
+
   const at = (id: string) => {
     const i = content.search(new RegExp(`<@!?${id.replace(/[^0-9A-Za-z_-]/g, '')}>`))
     return i < 0 ? Number.MAX_SAFE_INTEGER : i
@@ -55,6 +70,27 @@ export function mentionedUsers(session: Session): Mentioned[] {
     .map((u, i) => ({ u, i, pos: at(u.id) }))
     .sort((a, b) => a.pos - b.pos || a.i - b.i)
     .map((x) => x.u)
+}
+
+/**
+ * 需要目标却没找到时写进日志排查用：原始 mentions 每一项有哪些字段、正文里有哪些 `<@…>`。
+ * openid 只留后 6 位，昵称只记长度
+ */
+export function mentionDiagnostics(session: Session): Record<string, unknown> {
+  const raw = session.raw as { content?: unknown; mentions?: unknown } | undefined
+  const mask = (s: string) => s.replace(/[0-9A-Za-z_-]{7,}/g, (id) => `…${id.slice(-6)}`)
+  const scrub = (m: unknown) =>
+    m && typeof m === 'object'
+      ? Object.fromEntries(
+          Object.entries(m).map(([k, v]) => [k, typeof v !== 'string' ? v : k === 'nickname' || k === 'username' ? `<${v.length}字>` : mask(v)]),
+        )
+      : m
+  return {
+    event: session.rawType,
+    content: mask(str(raw?.content)),
+    rawMentions: Array.isArray(raw?.mentions) ? raw.mentions.map(scrub) : (raw?.mentions ?? null),
+    sessionMentions: session.mentions.map(scrub),
+  }
 }
 
 export type TargetToken = { kind: 'mention'; id: string } | { kind: 'index'; n: number }

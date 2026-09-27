@@ -1,5 +1,5 @@
 import type { Config } from '../config.js'
-import type { Game, GameReply } from '../game.js'
+import { type Game, type GameReply, noTarget } from '../game.js'
 import { type Bank, type Player, bankOf, nameOf, round2 } from '../model.js'
 import { positiveInt } from '../targets.js'
 
@@ -151,7 +151,7 @@ export async function collectInterest(game: Game): Promise<GameReply> {
 /** 转账：/转账 金额 @群友。上游先扣自己、再给对方分两次写，这里一条语句写两个人 */
 export async function transfer(game: Game, args: string[]): Promise<GameReply> {
   const target = game.mentions[0]?.id
-  if (!target) return '请使用@指定要转账的用户'
+  if (!target) return noTarget(game, '请使用@指定要转账的用户')
   if (target === game.userId) return '不能给自己转账'
   const amount = args.map(positiveInt).find((n) => n !== undefined)
   if (!amount) return '请输入转账金额，例如 /转账 500 @群友'

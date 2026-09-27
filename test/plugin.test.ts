@@ -154,6 +154,34 @@ describe('买卖', () => {
     expect((await player('A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1')).master).toBe('C3C941CFA01119A4A1373CC51055C2A3')
   })
 
+  describe('没开全量消息的群：被 @ 的群友只在正文里', () => {
+    const ME = 'C3C941CFA01119A4A1373CC51055C2A3'
+    const BOT = '0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F'
+    const TARGET = 'A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1'
+    const buy = (content: string, mentions?: unknown[]) =>
+      runCommand(plugin, '购买奴隶', '', {
+        session: { targetId: G, userId: ME, userName: '随风潜入夜', mentions: [], raw: { content, ...(mentions ? { mentions } : {}) } },
+        ctx: { db, config, services },
+      })
+
+    it('mentions 一项都没有：认正文里命令后面的 <@…>，命令前面那个当作在叫机器人', async () => {
+      await give(ME, 1000)
+      expect(text(await buy(`<@${BOT}> 购买奴隶 <@${TARGET}>`))).toContain('成功购买了群友A1A1！')
+      expect((await player(TARGET)).master).toBe(ME)
+    })
+
+    it('mentions 里只有 @ 机器人那一项', async () => {
+      await give(ME, 1000)
+      const reply = text(await buy(`<@${BOT}> /购买奴隶 <@${TARGET}>`, [{ id: BOT, username: '机器人', bot: true, is_you: true }]))
+      expect(reply).toContain('成功购买了群友A1A1！')
+    })
+
+    it('只 @ 了机器人：不会把机器人当成目标', async () => {
+      await give(ME, 1000)
+      expect(text(await buy(`<@${BOT}> 购买奴隶`))).toContain('请 @ 要购买的群友')
+    })
+  })
+
   it('按市场编号购买；不能买自己、不能买自己的主人', async () => {
     await give('alice', 1000)
     await give('bob', 0)

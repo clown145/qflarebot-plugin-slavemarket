@@ -1,4 +1,4 @@
-import type { Game, GameReply } from '../game.js'
+import { type Game, type GameReply, noTarget } from '../game.js'
 import { type Player, nameOf, round2, sample } from '../model.js'
 import type { TargetToken } from '../targets.js'
 import { hoursMinutes } from '../time.js'
@@ -33,7 +33,7 @@ export async function duel(game: Game, tokens: TargetToken[]): Promise<GameReply
   }
   const id1 = await resolve(tokens[0])
   const id2 = await resolve(tokens[1])
-  if (!id1 || !id2) return usage
+  if (!id1 || !id2) return noTarget(game, usage)
   if (id1 === id2) return '不能让同一个奴隶自己决斗'
   if (id2 === game.userId) return '对手不能是你自己'
   if (id2 === game.session.botId) return '不可以和我决斗捏~'

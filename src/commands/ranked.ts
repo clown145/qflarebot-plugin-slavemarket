@@ -1,4 +1,4 @@
-import type { Game, GameReply } from '../game.js'
+import { type Game, type GameReply, noTarget } from '../game.js'
 import { INITIAL_RANK_SCORE, nameOf, round2, sample, tierBonus, tierOf } from '../model.js'
 import type { TargetToken } from '../targets.js'
 import { minutesSeconds } from '../time.js'
@@ -56,7 +56,7 @@ export async function rankingInfo(game: Game): Promise<GameReply> {
  */
 export async function joinRanking(game: Game, tokens: TargetToken[]): Promise<GameReply> {
   const target = await resolveTarget(tokens[0], mySlaves(game))
-  if (!target) return '请指定参赛的奴隶：/参加排位赛 序号（发 /我的奴隶 查看序号）或 /参加排位赛 @群友'
+  if (!target) return noTarget(game, '请指定参赛的奴隶：/参加排位赛 序号（发 /我的奴隶 查看序号）或 /参加排位赛 @群友')
   return game.mutate([game.userId, target], (ps) => {
     const me = ps.get(game.userId)!
     const slave = ps.get(target)!
