@@ -5,28 +5,56 @@ export interface Mentioned {
   username: string
 }
 
+interface RawMention {
+  id?: unknown
+  member_openid?: unknown
+  user_openid?: unknown
+  nickname?: unknown
+  username?: unknown
+  bot?: unknown
+  is_you?: unknown
+}
+
+const str = (v: unknown) => (typeof v === 'string' ? v : '')
+
 /**
  * 消息里 @ 了谁（不含机器人），按在消息里出现的先后排——`/决斗 @A @B` 要分得清谁是谁。
  * 谁被 @ 只认平台给的 mentions（机器人自己在群里的 openid 和 AppID 不是一个，正文里的 `<@…>` 分不出是不是它）；
- * 原始正文只用来排先后
+ * 原始正文只用来排先后。
+ *
+ * 群消息的 mentions 里被 @ 者是 member_openid / nickname，没有 id；旧版框架的 session.mentions 只读 id，
+ * 群里 @ 谁都是空的（线上「购买奴隶 @群友」就是这么坏的），所以这里直接读原始推送，再并上 session.mentions
  */
 export function mentionedUsers(session: Session): Mentioned[] {
-  const raw = session.raw as { content?: unknown; mentions?: Array<{ is_you?: unknown; id?: unknown }> } | undefined
+  const raw = session.raw as { content?: unknown; mentions?: unknown } | undefined
   const bots = new Set<string>([session.botId])
-  for (const m of raw?.mentions ?? []) {
-    if (m?.is_you === true && typeof m.id === 'string') bots.add(m.id)
-  }
   const users: Mentioned[] = []
-  for (const m of session.mentions) {
-    if (!m.id || m.bot || bots.has(m.id) || users.some((u) => u.id === m.id)) continue
-    users.push({ id: m.id, username: m.username })
+  const add = (id: string, username: string, bot: boolean) => {
+    if (!id) return
+    if (bot) {
+      bots.add(id)
+      return
+    }
+    const known = users.find((u) => u.id === id)
+    if (!known) users.push({ id, username })
+    else if (!known.username) known.username = username
   }
+  for (const m of Array.isArray(raw?.mentions) ? (raw.mentions as RawMention[]) : []) {
+    if (!m || typeof m !== 'object') continue
+    add(str(m.member_openid) || str(m.id) || str(m.user_openid), str(m.nickname) || str(m.username), m.bot === true || m.is_you === true)
+  }
+  for (const m of session.mentions) add(m.id, m.username, m.bot)
+
   const content = typeof raw?.content === 'string' ? raw.content : ''
   const at = (id: string) => {
     const i = content.search(new RegExp(`<@!?${id.replace(/[^0-9A-Za-z_-]/g, '')}>`))
     return i < 0 ? Number.MAX_SAFE_INTEGER : i
   }
-  return users.map((u, i) => ({ u, i, pos: at(u.id) })).sort((a, b) => a.pos - b.pos || a.i - b.i).map((x) => x.u)
+  return users
+    .filter((u) => !bots.has(u.id))
+    .map((u, i) => ({ u, i, pos: at(u.id) }))
+    .sort((a, b) => a.pos - b.pos || a.i - b.i)
+    .map((x) => x.u)
 }
 
 export type TargetToken = { kind: 'mention'; id: string } | { kind: 'index'; n: number }

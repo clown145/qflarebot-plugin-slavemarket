@@ -128,6 +128,32 @@ describe('买卖', () => {
     expect((await player('carol')).currency).toBe(1000 - 120)
   })
 
+  it('群消息真实的 mentions 形状：member_openid / nickname，@ 机器人的那项 is_you（旧版框架的 session.mentions 是空 id）', async () => {
+    await give('C3C941CFA01119A4A1373CC51055C2A3', 1000, '随风潜入夜')
+    const s = await runCommand(plugin, '购买奴隶', '', {
+      session: {
+        targetId: G,
+        userId: 'C3C941CFA01119A4A1373CC51055C2A3',
+        userName: '随风潜入夜',
+        // 旧版框架只读 id / username，群里拿到的就是这样
+        mentions: [
+          { id: '', username: '', bot: false },
+          { id: '', username: '', bot: false },
+        ],
+        raw: {
+          content: '<@0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F> /购买奴隶 <@A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1>',
+          mentions: [
+            { scope: 'single', member_openid: '0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F', nickname: '机器人', is_you: true },
+            { scope: 'single', member_openid: 'A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1', nickname: '小明', bot: false, is_you: false },
+          ],
+        },
+      },
+      ctx: { db, config, services },
+    })
+    expect(text(s)).toContain('成功购买了小明！')
+    expect((await player('A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1')).master).toBe('C3C941CFA01119A4A1373CC51055C2A3')
+  })
+
   it('按市场编号购买；不能买自己、不能买自己的主人', async () => {
     await give('alice', 1000)
     await give('bob', 0)
