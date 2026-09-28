@@ -1,7 +1,9 @@
 import { DatabaseSync, type SQLInputValue } from 'node:sqlite'
 import type { ScopedDB } from '@qqbot/sdk'
-// 与线上同一套表名检查：线上会被拦下的 SQL，这里一样抛错（QFlareBot 与插件仓库并排放，CI 也是这个布局）
-import { flattenForExec, scopeSql, tablePrefix } from '../../QFlareBot/packages/runtime/src/sqlScope.js'
+// 与线上同一套表名检查：线上会被拦下的 SQL，这里一样抛错。
+// 从 SDK 的公开子路径取：以前直接引机器人仓库 runtime 的源码，那个文件改成从 SDK 转导出以后，
+// CI 里 runtime 没装依赖，类型检查就解析不到了
+import { flattenForExec, scopeSql, tablePrefix } from '@qqbot/sdk/sqlScope'
 
 export interface TestDB extends ScopedDB {
   sqlite: DatabaseSync
