@@ -1,12 +1,12 @@
 {
   "name": "slavemarket",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "apiVersion": 1,
   "permissions": [
     "db"
   ],
   "depends": {
-    "t2i": "*"
+    "t2i": "optional"
   },
   "conflicts": [],
   "commands": [

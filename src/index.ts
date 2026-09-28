@@ -8,11 +8,14 @@ import { targetTokens } from './targets.js'
 
 export default definePlugin<Config>({
   name: 'slavemarket',
+  // 没用到契约 2 的 ctx.db.batch()，写 1 让 0.4 以前的机器人也能装（不写就是构建时 SDK 的版本）
+  apiVersion: 1,
   displayName: '奴隶市场',
   description: '群聊文字游戏：打工赚钱、买卖群友当奴隶、训练、决斗、排位赛、银行、排行榜，每周自动重置',
   permissions: ['db'],
-  // 打工报告、排行榜、市场、帮助等出图；t2i 不可用时改发文字
-  depends: { t2i: '*' },
+  // 打工报告、排行榜、市场、帮助等出图；t2i 没装、停用或渲染失败时改发文字，所以是可选依赖。
+  // 写成必需的话，t2i 一停用这里所有命令都会报错。老版本机器人把 optional 当成必需，t2i 是内置的，不受影响
+  depends: { t2i: 'optional' },
 
   configSchema,
   defaultConfig,
